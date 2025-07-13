@@ -38,8 +38,15 @@ Here's what the dashboard looks like:
 1. **Clone the repository**:
 
    ```bash
-   git clone <your-repo-url>
-   cd cursor-analytics-portal
+   gh repo clone galprz/cursor-analytics
+   cd cursor-analytics
+   ```
+
+   Or using git directly:
+
+   ```bash
+   git clone https://github.com/galprz/cursor-analytics.git
+   cd cursor-analytics
    ```
 
 2. **Install dependencies**:
@@ -280,7 +287,7 @@ cursor-analytics-portal/
 
 ## License
 
-[Add your license information here]
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
 
 ## Support
 
