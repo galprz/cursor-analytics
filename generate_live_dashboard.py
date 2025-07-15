@@ -1,9 +1,20 @@
 #!/usr/bin/env python3
 """Generate HTML dashboard with real data from cursor_admin_sdk.
 
+Configuration Options (Command line arguments take precedence over environment variables):
+    --cookie, -c: Cookie string from authenticated browser session
+    --team-id, -t: Team ID from Cursor dashboard (e.g., 1234567)
+    
+Environment Variables (used if command line arguments not provided):
+    CURSOR_COOKIE_STRING: Cookie string from authenticated browser session
+    TEAM_ID: Team ID from Cursor dashboard (e.g., 1234567)
+
 Usage:
     # Run report on all team members (default)
     uv run python generate_live_dashboard.py
+
+    # Run report with command line arguments
+    uv run python generate_live_dashboard.py --cookie "your_cookie" --team-id 1234567
 
     # Run report on ai_champs group
     uv run python generate_live_dashboard.py --group ai_champs
@@ -21,6 +32,7 @@ Quick Commands:
     uv run python generate_live_dashboard.py -g ai_champs     # AI Champions report
     uv run python generate_live_dashboard.py -g engineering  # Engineering report
     uv run python generate_live_dashboard.py --list-groups   # List all groups
+    uv run python generate_live_dashboard.py -c "cookie" -t 1234567  # With inline auth
 
 Available groups: ai_champs, engineering, management, qa, backend, frontend, devops, product, design
 """
@@ -3176,7 +3188,8 @@ async def main():
                        choices=list(PREDEFINED_GROUPS.keys()) + [None])
     parser.add_argument('--days', '-d', type=int, default=7, help='Number of days to analyze (default: 7)')
     parser.add_argument('--list-groups', action='store_true', help='List all available groups and exit')
-    parser.add_argument('--team-id', type=int, default=1234567, help='Team ID (default: 1234567)')
+    parser.add_argument('--cookie', '-c', type=str, help='Cookie string from authenticated browser session (overrides CURSOR_COOKIE_STRING env var)')
+    parser.add_argument('--team-id', '-t', type=int, help='Team ID from Cursor dashboard (overrides TEAM_ID env var)')
     
     args = parser.parse_args()
     
@@ -3185,18 +3198,36 @@ async def main():
         show_available_groups()
         return
     
-    # Configuration - get cookie string from environment
-    cookie_string = os.getenv("CURSOR_COOKIE_STRING")
+    # Configuration - get cookie string from arguments or environment
+    cookie_string = args.cookie if args.cookie else os.getenv("CURSOR_COOKIE_STRING")
     if not cookie_string:
-        print("❌ Error: CURSOR_COOKIE_STRING environment variable not found!")
-        print("\n🔧 Setup required:")
-        print("1. Copy .env.example to .env: cp .env.example .env")
-        print("2. Get your cookie string from Cursor Admin (see README.md)")
-        print("3. Add it to .env file: CURSOR_COOKIE_STRING=\"your_cookie_here\"")
+        print("❌ Error: Cookie string not provided!")
+        print("\n🔧 Setup options:")
+        print("1. Command line: --cookie 'your_cookie_here'")
+        print("2. Environment variable: CURSOR_COOKIE_STRING='your_cookie_here'")
+        print("3. Or add to .env file: CURSOR_COOKIE_STRING=\"your_cookie_here\"")
         print("\n📖 For detailed instructions, see README.md")
         sys.exit(1)
     
-    team_id = args.team_id  # Your team ID
+    # Get team ID from arguments or environment variable
+    team_id = args.team_id if args.team_id else os.getenv("TEAM_ID")
+    if not team_id:
+        print("❌ Error: Team ID not provided!")
+        print("\n🔧 Setup options:")
+        print("1. Command line: --team-id 1234567")
+        print("2. Environment variable: TEAM_ID=1234567")
+        print("3. Or add to .env file: TEAM_ID=1234567")
+        print("\n📖 For detailed instructions, see README.md")
+        sys.exit(1)
+    
+    # Convert team_id to int if it's a string from environment variable
+    if isinstance(team_id, str):
+        try:
+            team_id = int(team_id)
+        except ValueError:
+            print("❌ Error: TEAM_ID must be a valid integer!")
+            print(f"Current value: {team_id}")
+            sys.exit(1)
     days_back = args.days  # Number of days to analyze
     
     # ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
