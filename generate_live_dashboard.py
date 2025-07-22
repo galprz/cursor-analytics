@@ -51,6 +51,9 @@ from cursor_admin_sdk import (
     TeamSpendResponse,
 )
 
+# Import our CSV-based aggregator as a drop-in replacement
+from csv_request_aggregator import CSVRequestAggregator
+
 # Predefined groups of people for easy report generation
 PREDEFINED_GROUPS = {
     "ai_champs": [
@@ -1181,7 +1184,8 @@ class LiveDashboardGenerator:
     
     def __init__(self, cookie_string: str, excluded_emails: List[str] = None, people_to_include: List[str] = None, group_name: str = None):
         self.cookie_string = cookie_string
-        self.aggregator = RequestAggregator(cookie_string)
+        # Use CSV-based aggregator instead of API-based one for dramatically faster performance
+        self.aggregator = CSVRequestAggregator(cookie_string)
         self.excluded_emails = excluded_emails or []
         self.people_to_include = people_to_include or []
         self.group_name = group_name
@@ -3210,13 +3214,13 @@ async def main():
         sys.exit(1)
     
     # Get team ID from arguments or environment variable
-    team_id = args.team_id if args.team_id else os.getenv("TEAM_ID")
+    team_id = args.team_id if args.team_id else os.getenv("CURSOR_TEAM_ID")
     if not team_id:
         print("❌ Error: Team ID not provided!")
         print("\n🔧 Setup options:")
         print("1. Command line: --team-id 1234567")
-        print("2. Environment variable: TEAM_ID=1234567")
-        print("3. Or add to .env file: TEAM_ID=1234567")
+        print("2. Environment variable: CURSOR_TEAM_ID=1234567")
+        print("3. Or add to .env file: CURSOR_TEAM_ID=1234567")
         print("\n📖 For detailed instructions, see README.md")
         sys.exit(1)
     
@@ -3225,7 +3229,7 @@ async def main():
         try:
             team_id = int(team_id)
         except ValueError:
-            print("❌ Error: TEAM_ID must be a valid integer!")
+            print("❌ Error: CURSOR_TEAM_ID must be a valid integer!")
             print(f"Current value: {team_id}")
             sys.exit(1)
     days_back = args.days  # Number of days to analyze
